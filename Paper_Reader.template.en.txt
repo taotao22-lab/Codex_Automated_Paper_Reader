@@ -30,6 +30,12 @@ Network preflight requirements:
 Candidate file:
 - After fetch completes, read the candidate path printed by the command, usually:
   data/processed/YYYY-MM-DD_candidates.json
+- Also read `recommended_action` and `duplicate_check` from `data/raw/YYYY-MM-DD.json`.
+- If `recommended_action` is `write_no_new_batch_note`, `duplicate_check.recommended_action` is `write_no_new_batch_note`, `duplicate_check.status` is `duplicate_of_previous`, or today's candidates are empty / today's candidate paper-id set is identical to the most recent previous candidate file:
+  - Do not write a normal repeated Top 10 report.
+  - Do not reuse an old Top 10 as if it were a new recommendation.
+  - Write only a short "no new candidate batch today" note to `reports/YYYY-MM-DD.md`, including the candidate count, latest visible arXiv batch, and likely reason such as today's arXiv recent-list not being updated yet, no announcement batch for the target date, or a repeated candidate pool.
+  - Unless the user explicitly asks for a backfill/rescore, do not rewrite `data/processed/YYYY-MM-DD_scored.json`.
 
 If fetch fails or the candidate pool is empty:
 - Check `logs/YYYY-MM-DD.log`, `data/raw/YYYY-MM-DD.json`, and `data/processed/YYYY-MM-DD_candidates.json`.

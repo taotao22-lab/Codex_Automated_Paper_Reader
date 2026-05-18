@@ -43,6 +43,17 @@ logs/YYYY-MM-DD.log
 
 Runtime outputs are ignored by Git.
 
+The raw JSON includes a `duplicate_check` block. If `status` is
+`duplicate_of_previous`, today's final candidate pool has the same paper IDs as
+the most recent previous candidate file. In that case, `recommended_action` is
+`write_no_new_batch_note`, and Codex should write a short "no new candidate
+batch today" note instead of repeating the prior Top 10.
+
+For arXiv, CAPR treats the HTML recent-list heading date as the authoritative
+daily announcement date. If no papers are listed for the target date, it does
+not reuse the latest older batch; the raw JSON will recommend the same short
+no-new-batch note.
+
 ## Network Preflight
 
 Before fetching, the script checks core source URLs for arXiv and OpenReview. If these checks fail, the script exits before writing an empty candidate file.

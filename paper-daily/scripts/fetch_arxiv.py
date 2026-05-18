@@ -34,6 +34,20 @@ def fetch_arxiv(
     max_results = int(source_config.get("max_results", 100))
     logger.info("Fetching arXiv papers, max_results=%s", max_results)
 
+    if source_config.get("html_recent_authoritative", True) and source_config.get("html_fallback_enabled", True):
+        logger.info("Using arxiv.org HTML recent-list as the authoritative daily source")
+        html_papers, html_warnings = fetch_arxiv_html_recent(
+            source_config,
+            research_profile.get("arxiv_categories", []),
+            target_date,
+            lookback_days,
+            max_results,
+            logger,
+        )
+        papers = _dedupe_arxiv_results(html_papers)[:max_results]
+        logger.info("Fetched %s arXiv papers after recent-list date filtering", len(papers))
+        return papers, html_warnings
+
     papers: list[dict[str, Any]] = []
     keyword_chunks = chunk_keywords(research_profile.get("positive_keywords", []), chunk_size=12)
     api_failure_count = 0
@@ -199,48 +213,58 @@ def fetch_arxiv_html_recent(
     per_category = normalize_arxiv_show_count(int(source_config.get("html_fallback_per_category", 50)))
     total_limit = min(max_results, int(source_config.get("html_fallback_max_results", max_results)))
     sleep_seconds = float(source_config.get("html_fallback_sleep_seconds", 0.25))
-    start_dt, end_dt = lookback_window(target_date, lookback_days)
-
-    paper_ids: list[str] = []
+    paper_refs: list[tuple[str, str]] = []
+    latest_recent_dt: datetime | None = None
     seen_ids: set[str] = set()
     for category in categories:
-        if len(paper_ids) >= total_limit:
+        if len(paper_refs) >= total_limit:
             break
         url = ARXIV_HTML_LIST_URL.format(category=category, show=per_category)
         try:
             html = http_get_text(url, retries=0)
-            ids = parse_arxiv_recent_ids(html)
+            refs = parse_arxiv_recent_refs(html)
         except Exception as exc:
             warning = f"arXiv HTML list fetch failed for {category}: {exc}"
             warnings.append(warning)
             logger.warning(warning)
             continue
-        for paper_id in ids:
+        for paper_id, recent_listed_at in refs:
+            recent_dt = parse_datetime(recent_listed_at)
+            if recent_dt and (latest_recent_dt is None or recent_dt > latest_recent_dt):
+                latest_recent_dt = recent_dt
+            if recent_dt and recent_dt.date() != target_date:
+                continue
             if paper_id not in seen_ids:
                 seen_ids.add(paper_id)
-                paper_ids.append(paper_id)
-            if len(paper_ids) >= total_limit:
+                paper_refs.append((paper_id, recent_listed_at))
+            if len(paper_refs) >= total_limit:
                 break
 
     papers: list[dict[str, Any]] = []
-    for paper_id in paper_ids:
+    for paper_id, recent_listed_at in paper_refs:
         try:
             html = http_get_text(ARXIV_ABS_URL.format(paper_id=paper_id), retries=0)
-            paper = normalize_arxiv_abs_html(paper_id, html)
+            paper = normalize_arxiv_abs_html(paper_id, html, recent_listed_at=recent_listed_at)
         except Exception as exc:
             warning = f"arXiv HTML abs fetch failed for {paper_id}: {exc}"
             warnings.append(warning)
             logger.warning(warning)
             continue
 
-        paper_dt = parse_datetime(paper.get("published_at")) or parse_datetime(paper.get("updated_at"))
-        if paper_dt and not (start_dt <= paper_dt <= end_dt):
-            continue
         papers.append(paper)
         if len(papers) >= total_limit:
             break
         if sleep_seconds > 0:
             time_module.sleep(sleep_seconds)
+
+    if not papers:
+        latest_key = latest_recent_dt.date().isoformat() if latest_recent_dt else "none"
+        logger.info(
+            "No arXiv recent-list papers found for target date %s; latest visible batch is %s. "
+            "Not reusing an older batch.",
+            target_date.isoformat(),
+            latest_key,
+        )
 
     logger.info("Fetched %s arXiv papers through HTML fallback", len(papers))
     return papers, warnings
@@ -249,6 +273,32 @@ def fetch_arxiv_html_recent(
 def parse_arxiv_recent_ids(html: str) -> list[str]:
     ids = re.findall(r"href\s*=\s*['\"]/abs/(\d{4}\.\d{4,5})(?:v\d+)?['\"]", html)
     return unique_preserve_order_local(ids)
+
+
+def parse_arxiv_recent_refs(html: str) -> list[tuple[str, str]]:
+    refs: list[tuple[str, str]] = []
+    sections = re.findall(r"<h3>\s*(.*?)\s*</h3>(.*?)(?=<h3>|</dl>)", html, flags=re.S)
+    for heading_html, section_html in sections:
+        recent_listed_at = parse_arxiv_recent_heading_date(heading_html)
+        for paper_id in parse_arxiv_recent_ids(section_html):
+            refs.append((paper_id, recent_listed_at))
+    if refs:
+        return refs
+    return [(paper_id, "") for paper_id in parse_arxiv_recent_ids(html)]
+
+
+def parse_arxiv_recent_heading_date(heading_html: str) -> str:
+    heading = normalize_whitespace(strip_tags(heading_html))
+    match = re.search(r"(\d{1,2}\s+[A-Za-z]+\s+\d{4})", heading)
+    if not match:
+        return ""
+    raw_date = match.group(1)
+    for fmt in ("%d %b %Y", "%d %B %Y"):
+        try:
+            return isoformat_or_empty(datetime.strptime(raw_date, fmt).replace(tzinfo=timezone.utc))
+        except ValueError:
+            continue
+    return ""
 
 
 def normalize_arxiv_show_count(value: int) -> int:
@@ -260,12 +310,17 @@ def normalize_arxiv_show_count(value: int) -> int:
     return 2000
 
 
-def normalize_arxiv_abs_html(paper_id: str, html: str) -> dict[str, Any]:
+def normalize_arxiv_abs_html(paper_id: str, html: str, recent_listed_at: str = "") -> dict[str, Any]:
     title = meta_content(html, "citation_title") or parse_html_title(html)
     authors = meta_contents(html, "citation_author")
     abstract = meta_content(html, "citation_abstract") or parse_html_abstract(html)
     citation_date = meta_content(html, "citation_date")
-    published_at = isoformat_or_empty(citation_date.replace("/", "-") if citation_date else "")
+    citation_published_at = isoformat_or_empty(citation_date.replace("/", "-") if citation_date else "")
+    published_at = citation_published_at
+    recent_dt = parse_datetime(recent_listed_at)
+    citation_dt = parse_datetime(citation_published_at)
+    if recent_dt and (citation_dt is None or recent_dt > citation_dt):
+        published_at = isoformat_or_empty(recent_dt)
     pdf_url = meta_content(html, "citation_pdf_url") or f"https://arxiv.org/pdf/{paper_id}"
     categories = parse_arxiv_html_categories(html)
 
@@ -278,10 +333,14 @@ def normalize_arxiv_abs_html(paper_id: str, html: str) -> dict[str, Any]:
         "url": ARXIV_ABS_URL.format(paper_id=paper_id),
         "pdf_url": pdf_url,
         "published_at": published_at,
-        "updated_at": published_at,
+        "updated_at": citation_published_at or published_at,
         "venue": categories[0] if categories else "arXiv",
         "categories": categories,
     }
+    if recent_listed_at:
+        paper["recent_listed_at"] = recent_listed_at
+    if citation_published_at and citation_published_at != published_at:
+        paper["abs_page_published_at"] = citation_published_at
     return validate_paper_schema(paper)
 
 

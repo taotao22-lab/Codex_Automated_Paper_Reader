@@ -30,6 +30,12 @@ python scripts/daily_papers.py --config config.yaml --date today --stage fetch -
 候选文件：
 - fetch 完成后读取命令输出中的候选文件路径，通常是：
   data/processed/YYYY-MM-DD_candidates.json
+- 同时读取 `data/raw/YYYY-MM-DD.json` 中的 `recommended_action` 和 `duplicate_check`。
+- 如果 `recommended_action` 是 `write_no_new_batch_note`、`duplicate_check.recommended_action` 是 `write_no_new_batch_note`、`duplicate_check.status` 是 `duplicate_of_previous`，或当天 candidates 为空 / paper id 集合与最近一天 candidates 完全一致：
+  - 不要重复生成正常 Top 10 日报。
+  - 不要沿用旧 Top 10 冒充当天新推荐。
+  - 写一个很短的“今日无新候选批次”说明到 `reports/YYYY-MM-DD.md`，注明候选数量、最近可见 arXiv 批次、主要原因（例如 arXiv 今日 recent-list 尚未更新、当天无公告批次、或候选池与上一批重复）。
+  - 除非用户明确要求补跑/重评，不要重写 `data/processed/YYYY-MM-DD_scored.json`。
 
 如果 fetch 失败或候选池为空：
 - 检查 `logs/YYYY-MM-DD.log`、`data/raw/YYYY-MM-DD.json` 和 `data/processed/YYYY-MM-DD_candidates.json`。
