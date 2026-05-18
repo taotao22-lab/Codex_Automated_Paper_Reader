@@ -93,6 +93,11 @@ logs/YYYY-MM-DD.log
 ```
 
 注意：这一步只生成候选池，不生成最终日报。
+`data/raw/YYYY-MM-DD.json` 会包含 `duplicate_check`。如果状态是
+`duplicate_of_previous`，对应的 `recommended_action` 会是
+`write_no_new_batch_note`，说明当天候选池与最近一次候选池完全相同；Codex 应写一段
+“今日无新候选批次”说明，而不是重复生成 Top 10 日报。
+arXiv 日报优先使用 HTML recent-list 的公告日期；如果目标日期没有新公告批次，流程不会复用旧批次。
 
 ## Codex 自动化用法
 

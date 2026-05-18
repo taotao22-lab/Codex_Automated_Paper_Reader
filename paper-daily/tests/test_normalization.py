@@ -1,9 +1,19 @@
+import logging
+from datetime import date
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-from fetch_arxiv import normalize_arxiv_abs_html, normalize_arxiv_entry, parse_arxiv_entries_xml, parse_arxiv_recent_ids
+from fetch_arxiv import (
+    fetch_arxiv_html_recent,
+    normalize_arxiv_abs_html,
+    normalize_arxiv_entry,
+    parse_arxiv_entries_xml,
+    parse_arxiv_recent_heading_date,
+    parse_arxiv_recent_ids,
+    parse_arxiv_recent_refs,
+)
 from fetch_openreview import normalize_openreview_note
 
 
@@ -94,12 +104,20 @@ def test_arxiv_stdlib_xml_parser_supports_real_feed_shape():
 def test_arxiv_html_fallback_parsers_support_recent_and_abs_pages():
     recent_html = """
     <dl id='articles'>
+      <h3>Fri, 15 May 2026 (showing first 25 of 261 entries )</h3>
       <dt><a href ="/abs/2605.15188" title="Abstract">arXiv:2605.15188</a></dt>
       <dt><a href="/abs/2605.15188" title="Abstract">duplicate</a></dt>
       <dt><a href="/abs/2605.15183v2" title="Abstract">arXiv:2605.15183</a></dt>
     </dl>
     """
     assert parse_arxiv_recent_ids(recent_html) == ["2605.15188", "2605.15183"]
+    assert parse_arxiv_recent_heading_date("Fri, 15 May 2026 (showing first 25 of 261 entries )").startswith(
+        "2026-05-15"
+    )
+    assert parse_arxiv_recent_refs(recent_html) == [
+        ("2605.15188", "2026-05-15T00:00:00+00:00"),
+        ("2605.15183", "2026-05-15T00:00:00+00:00"),
+    ]
 
     abs_html = """
     <meta name="citation_title" content="A Test Paper" />
@@ -112,11 +130,104 @@ def test_arxiv_html_fallback_parsers_support_recent_and_abs_pages():
       <span class="primary-subject">Machine Learning (cs.LG)</span>; Signal Processing (eess.SP)
     </td>
     """
-    paper = normalize_arxiv_abs_html("2605.15188", abs_html)
+    paper = normalize_arxiv_abs_html("2605.15188", abs_html, recent_listed_at="2026-05-15T00:00:00+00:00")
     assert paper["title"] == "A Test Paper"
     assert paper["authors"] == ["Alice", "Bob"]
     assert paper["categories"] == ["cs.LG", "eess.SP"]
-    assert paper["published_at"].startswith("2026-05-14")
+    assert paper["published_at"].startswith("2026-05-15")
+    assert paper["abs_page_published_at"].startswith("2026-05-14")
+
+
+def test_arxiv_html_recent_uses_listing_date_when_abs_metadata_lags(monkeypatch):
+    recent_html = """
+    <dl id="articles">
+      <h3>Fri, 15 May 2026 (showing 1 of 1 entries )</h3>
+      <dt><a href="/abs/2605.15188" title="Abstract">arXiv:2605.15188</a></dt>
+    </dl>
+    """
+    abs_html = """
+    <meta name="citation_title" content="A Test Paper" />
+    <meta name="citation_author" content="Alice" />
+    <meta name="citation_date" content="2026/05/14" />
+    <meta name="citation_pdf_url" content="https://arxiv.org/pdf/2605.15188" />
+    <meta name="citation_abstract" content="An abstract about neural time series." />
+    <td class="tablecell subjects">
+      <span class="primary-subject">Machine Learning (cs.LG)</span>
+    </td>
+    """
+
+    def fake_http_get_text(url, retries=2, retry_after_seconds=60):
+        if "/list/" in url:
+            return recent_html
+        if "/abs/2605.15188" in url:
+            return abs_html
+        raise AssertionError(url)
+
+    monkeypatch.setattr("fetch_arxiv.http_get_text", fake_http_get_text)
+
+    papers, warnings = fetch_arxiv_html_recent(
+        {
+            "html_fallback_per_category": 25,
+            "html_fallback_max_results": 10,
+            "html_fallback_sleep_seconds": 0,
+        },
+        ["cs.LG"],
+        date(2026, 5, 15),
+        3,
+        10,
+        logging.getLogger("test_arxiv_html_recent"),
+    )
+
+    assert warnings == []
+    assert [paper["id"] for paper in papers] == ["2605.15188"]
+    assert papers[0]["published_at"].startswith("2026-05-15")
+    assert papers[0]["recent_listed_at"].startswith("2026-05-15")
+
+
+def test_arxiv_html_recent_does_not_reuse_latest_batch_when_no_new_listing_exists(monkeypatch):
+    recent_html = """
+    <dl id="articles">
+      <h3>Fri, 15 May 2026 (showing 1 of 1 entries )</h3>
+      <dt><a href="/abs/2605.15188" title="Abstract">arXiv:2605.15188</a></dt>
+    </dl>
+    """
+    abs_html = """
+    <meta name="citation_title" content="A Test Paper" />
+    <meta name="citation_author" content="Alice" />
+    <meta name="citation_date" content="2026/05/14" />
+    <meta name="citation_pdf_url" content="https://arxiv.org/pdf/2605.15188" />
+    <meta name="citation_abstract" content="An abstract about neural time series." />
+    <td class="tablecell subjects">
+      <span class="primary-subject">Machine Learning (cs.LG)</span>
+    </td>
+    """
+
+    def fake_http_get_text(url, retries=2, retry_after_seconds=60):
+        if "/list/" in url:
+            return recent_html
+        if "/abs/2605.15188" in url:
+            return abs_html
+        if "/abs/" in url:
+            raise AssertionError("old batch should not be fetched")
+        raise AssertionError(url)
+
+    monkeypatch.setattr("fetch_arxiv.http_get_text", fake_http_get_text)
+
+    papers, warnings = fetch_arxiv_html_recent(
+        {
+            "html_fallback_per_category": 25,
+            "html_fallback_max_results": 10,
+            "html_fallback_sleep_seconds": 0,
+        },
+        ["cs.LG"],
+        date(2026, 5, 18),
+        3,
+        10,
+        logging.getLogger("test_arxiv_weekend_fallback"),
+    )
+
+    assert warnings == []
+    assert papers == []
 
 
 def test_openreview_dict_note_normalization_for_http_api_fallback():
