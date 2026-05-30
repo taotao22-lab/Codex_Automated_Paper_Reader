@@ -21,6 +21,9 @@ if (-not $pending) {
     exit 0
 }
 
-git -C $Root commit -m "文档：新增 $Date Agent 文章日报"
+$Prefix = -join ([char[]](0x6587, 0x6863, 0xff1a, 0x65b0, 0x589e))
+$Suffix = -join ([char[]](0x6587, 0x7ae0, 0x65e5, 0x62a5))
+$CommitMessage = "$Prefix $Date Agent $Suffix"
+git -C $Root -c i18n.commitEncoding=utf-8 -c i18n.logOutputEncoding=utf-8 commit -m $CommitMessage
 git -C $Root push $Remote $Branch
 Write-Output "Published $ReportPath to $Remote/$Branch"
