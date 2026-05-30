@@ -21,6 +21,6 @@ if (-not $pending) {
     exit 0
 }
 
-git -C $Root commit -m "docs: add daily agent article report $Date"
+git -C $Root commit -m "文档：新增 $Date Agent 文章日报"
 git -C $Root push $Remote $Branch
 Write-Output "Published $ReportPath to $Remote/$Branch"

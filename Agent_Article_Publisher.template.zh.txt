@@ -141,7 +141,7 @@ GitHub 提交要求：
 - 不要提交 `paper-daily/data/`、`paper-daily/logs/`、虚拟环境或临时文件。
 - 如果有可提交变化，执行：
   git add docs/agent-article-reports
-  git commit -m "docs: add daily agent article report YYYY-MM-DD"
+  git commit -m "文档：新增 YYYY-MM-DD Agent 文章日报"
   git push origin main
 
 最后回复用户：
