@@ -15,6 +15,72 @@ from utils import paper_display_date, validate_paper_schema
 
 
 KEYWORD_WEIGHTS = {
+    "general agent": 5.0,
+    "autonomous agent": 5.0,
+    "llm agent": 5.0,
+    "language agent": 4.5,
+    "foundation agent": 4.5,
+    "multimodal agent": 4.0,
+    "multi-agent": 4.0,
+    "multi-agent system": 4.0,
+    "agent architecture": 4.5,
+    "agent framework": 4.0,
+    "agent memory": 4.0,
+    "memory-augmented agent": 4.0,
+    "tool use": 4.5,
+    "tool-using agent": 4.5,
+    "function calling": 3.5,
+    "planning": 3.0,
+    "task planning": 4.0,
+    "long-horizon planning": 4.0,
+    "reasoning and acting": 4.0,
+    "react": 3.5,
+    "reflection": 3.0,
+    "self-reflection": 3.5,
+    "self-improvement": 3.5,
+    "workflow automation": 3.5,
+    "embodied agent": 3.0,
+    "gui agent": 4.0,
+    "computer use": 4.0,
+    "browser agent": 4.0,
+    "web agent": 4.5,
+    "search agent": 5.0,
+    "retrieval agent": 4.5,
+    "information seeking": 4.0,
+    "web search": 4.0,
+    "search engine": 3.0,
+    "retrieval-augmented generation": 4.5,
+    "rag": 4.0,
+    "query planning": 4.0,
+    "query rewriting": 3.5,
+    "document retrieval": 3.5,
+    "reranking": 4.0,
+    "answer verification": 4.0,
+    "fact checking": 3.5,
+    "code agent": 5.0,
+    "coding agent": 5.0,
+    "software engineering agent": 5.0,
+    "program synthesis": 4.0,
+    "code generation": 4.0,
+    "code editing": 4.0,
+    "automated program repair": 3.5,
+    "repository-level": 4.5,
+    "issue resolution": 4.0,
+    "test generation": 3.5,
+    "debugging": 3.5,
+    "terminal use": 3.5,
+    "agent benchmark": 4.0,
+    "agent evaluation": 4.0,
+    "swe-bench": 4.5,
+    "webarena": 4.0,
+    "mind2web": 4.0,
+    "toolbench": 4.0,
+    "agent safety": 4.0,
+    "agent alignment": 4.0,
+    "hallucination mitigation": 3.5,
+    "sandbox": 3.0,
+    "guardrails": 3.5,
+    "human-in-the-loop": 3.5,
     "representation learning": 4.0,
     "disentangled representation": 4.0,
     "invariant representation": 3.5,
@@ -54,8 +120,6 @@ KEYWORD_WEIGHTS = {
     "representation drift": 3.5,
     "non-stationary learning": 3.5,
     "language model integration": 3.0,
-    "retrieval-augmented generation": 3.0,
-    "reranking": 3.5,
     "sequence scoring": 3.5,
     "decoding strategy": 3.5,
     "preference optimization": 3.0,
@@ -77,6 +141,17 @@ KEYWORD_WEIGHTS = {
 }
 
 METHOD_CONTEXT_TERMS = [
+    "agent",
+    "agents",
+    "tool use",
+    "planning",
+    "search",
+    "retrieval",
+    "code",
+    "coding",
+    "software engineering",
+    "benchmark",
+    "evaluation",
     "method",
     "model",
     "learning",
@@ -270,6 +345,22 @@ def compute_freshness_score(paper: dict[str, Any], target_date: date) -> float:
 
 def compute_topic_combo_bonus(text: str) -> float:
     bonus = 0.0
+    if has_any_term(text, ["agent", "llm agent", "language agent", "autonomous agent"]) and has_any_term(
+        text, ["tool use", "planning", "reflection", "memory", "workflow", "function calling"]
+    ):
+        bonus += 2.5
+    if has_any_term(text, ["search agent", "web agent", "browser agent", "retrieval agent"]) and has_any_term(
+        text, ["web search", "query planning", "retrieval", "reranking", "answer verification", "fact checking"]
+    ):
+        bonus += 2.5
+    if has_any_term(text, ["code agent", "coding agent", "software engineering agent"]) and has_any_term(
+        text, ["repository-level", "issue resolution", "test generation", "debugging", "program repair", "swe-bench"]
+    ):
+        bonus += 2.5
+    if has_any_term(text, ["agent benchmark", "agent evaluation", "webarena", "mind2web", "toolbench", "swe-bench"]) and has_any_term(
+        text, ["agent", "tool", "web", "code", "software"]
+    ):
+        bonus += 1.5
     if has_any_term(text, ["sequence modeling", "temporal modeling", "state space model", "recurrent model"]) and has_any_term(
         text, ["time series", "long-context", "spatiotemporal", "irregular"]
     ):

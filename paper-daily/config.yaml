@@ -1,89 +1,130 @@
 research_profile:
   language: en
   goal: >
-    Find general AI method papers that may inspire machine learning research,
-    time-series modeling, sequence modeling, multimodal learning, adaptation,
-    calibration, uncertainty modeling, and robust deployment.
+    Find recent papers and technical articles about General Agents, Search
+    Agents, and Code Agents, prioritizing reusable agent architectures,
+    planning/search methods, tool use, retrieval, coding workflows, evaluation,
+    safety, and deployment practices.
   background_topics:
-    - machine learning
-    - representation learning
-    - sequence modeling
-    - time-series modeling
-    - multimodal learning
-    - uncertainty modeling
-    - calibration
-    - test-time adaptation
-    - continual learning
-    - domain adaptation
-    - distribution shift
+    - general agent
+    - autonomous agent
+    - llm agent
+    - multi-agent system
+    - search agent
+    - web agent
+    - retrieval-augmented generation
+    - tool use
+    - code agent
+    - software engineering agent
+    - program synthesis
+    - repository-level coding
+    - agent evaluation
+    - agent safety
   positive_keywords:
+    - general agent
+    - autonomous agent
+    - llm agent
+    - language agent
+    - foundation agent
+    - multimodal agent
+    - multi-agent
+    - multi-agent system
+    - agent architecture
+    - agent framework
+    - agent memory
+    - memory-augmented agent
+    - tool use
+    - tool-using agent
+    - function calling
+    - planning
+    - task planning
+    - long-horizon planning
+    - reasoning and acting
+    - ReAct
+    - reflection
+    - self-reflection
+    - self-improvement
+    - workflow automation
+    - embodied agent
+    - GUI agent
+    - computer use
+    - browser agent
+    - web agent
+    - search agent
+    - retrieval agent
+    - information seeking
+    - web search
+    - search engine
+    - retrieval-augmented generation
+    - RAG
+    - query planning
+    - query rewriting
+    - document retrieval
+    - reranking
+    - answer verification
+    - fact checking
+    - code agent
+    - coding agent
+    - software engineering agent
+    - program synthesis
+    - code generation
+    - code editing
+    - automated program repair
+    - repository-level
+    - issue resolution
+    - test generation
+    - debugging
+    - terminal use
+    - agent benchmark
+    - agent evaluation
+    - SWE-bench
+    - WebArena
+    - Mind2Web
+    - ToolBench
+    - agent safety
+    - agent alignment
+    - hallucination mitigation
+    - sandbox
+    - guardrails
+    - human-in-the-loop
     - representation learning
-    - disentangled representation
-    - invariant representation
-    - equivariant representation
     - contrastive learning
     - self-supervised learning
-    - masked modeling
-    - masked autoencoder
-    - latent variable model
-    - prototype learning
-    - metric learning
     - sequence modeling
-    - temporal modeling
     - long-context modeling
-    - state space model
-    - recurrent model
-    - temporal attention
-    - alignment modeling
-    - CTC
-    - transducer
     - sequence-to-sequence
     - uncertainty estimation
-    - aleatoric uncertainty
-    - epistemic uncertainty
     - calibration
     - conformal prediction
     - robust learning
     - out-of-distribution
-    - noisy label learning
     - confidence estimation
-    - online adaptation
-    - test-time adaptation
     - continual learning
-    - domain adaptation
-    - domain generalization
     - distribution shift
-    - representation drift
-    - non-stationary learning
     - language model integration
-    - retrieval-augmented generation
-    - reranking
-    - sequence scoring
     - decoding strategy
     - preference optimization
     - weak supervision
-    - posterior inference
     - self-training
-    - pseudo-labeling
-    - diffusion model
     - multimodal alignment
-    - cross-modal representation learning
     - attention mechanism
     - tokenization
-    - spatiotemporal modeling
-    - time series
-    - irregular time series
     - foundation model
-    - scientific machine learning
     - language model
   negative_keywords:
     - protein folding
-    - recommender system
     - materials discovery
-    - web scraper
-    - vulnerability fixing
-    - tutoring system
+    - medical diagnosis
+    - drug discovery
+    - recommender system
     - financial forecasting
+    - education tutoring
+    - pure robotics control
+    - traffic prediction
+    - graph neural network only
+    - protein design
+    - vulnerability fixing dataset only
+    - tutoring system
   arxiv_categories:
     - cs.LG
     - cs.AI
@@ -91,9 +132,12 @@ research_profile:
     - cs.CV
     - cs.MM
     - cs.IR
+    - cs.SE
+    - cs.PL
+    - cs.HC
+    - cs.CY
     - cs.SD
     - cs.NE
-    - eess.SP
     - stat.ML
   preferred_venues:
     - NeurIPS
@@ -147,7 +191,7 @@ sources:
     api_key: ""
 
 output:
-  report_dir: reports
+  report_dir: ../docs/agent-article-reports
   data_dir: data
   log_dir: logs
 

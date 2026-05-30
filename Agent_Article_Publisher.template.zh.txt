@@ -1,0 +1,62 @@
+# Agent Article Publisher Automation Prompt
+
+目标：
+- 每天抓取并阅读 General Agent、Search Agent、Code Agent 相关文章/论文。
+- 生成中文 Markdown 日报。
+- 将日报提交并推送到当前仓库的 GitHub 远端。
+
+工作目录：
+C:\Users\24644\Desktop\Codex_Automated_Paper_Reader
+
+执行要求：
+1. 进入 `paper-daily` 目录，运行候选抓取：
+   `python scripts/daily_papers.py --config config.yaml --date today --stage fetch --force`
+2. 读取命令输出中的候选文件，通常是：
+   `paper-daily/data/processed/YYYY-MM-DD_candidates.json`
+3. 同时读取：
+   `paper-daily/data/raw/YYYY-MM-DD.json`
+4. 如果 `recommended_action` 是 `write_no_new_batch_note`，或候选为空，或候选集合与最近一次完全重复：
+   - 不要重复生成旧 Top 10。
+   - 在 `docs/agent-article-reports/YYYY-MM-DD.md` 写一篇简短说明，写清候选数量和原因。
+5. 如果有新候选：
+   - 围绕 General Agent、Search Agent、Code Agent 三类进行语义筛选。
+   - 优先选择与 Agent 架构、工具调用、搜索/检索、代码生成/编辑、软件工程自动化、评测、安全和部署相关的文章。
+   - 至少基于 title、abstract、venue/categories、retrieval_reason 评分。
+   - 对 Top 候选尽量打开论文页或 PDF 做进一步阅读；无法深读时必须标注 `abstract-only`。
+6. 保存语义评分到：
+   `paper-daily/data/processed/YYYY-MM-DD_scored.json`
+7. 生成中文日报到：
+   `docs/agent-article-reports/YYYY-MM-DD.md`
+8. 日报建议包含：
+   - 今日概览
+   - General Agent
+   - Search Agent
+   - Code Agent
+   - 重点论文/文章 Top 10
+   - 今日趋势
+   - 可实践 idea
+   - 每篇的证据来源：abstract-only / paper page / PDF
+9. 检查 Git 状态，只提交本次新增或修改的日报、索引文件和必要文档，不提交 `paper-daily/data/`、`paper-daily/logs/` 或虚拟环境。
+10. 如果有可提交变化，执行：
+    - `git add docs/agent-article-reports`
+    - `git commit -m "docs: add daily agent article report YYYY-MM-DD"`
+    - `git push origin main`
+11. 最后回复：
+    - 今日候选数量
+    - 日报路径
+    - 是否已推送 GitHub
+    - Top 标题列表
+    - 任何网络、来源或阅读深度限制
+
+评分维度，每项 0-5：
+- Agent relevance
+- Method or system insight
+- Search/retrieval/code-agent relevance
+- Practical reproducibility
+- Novelty/timeliness
+- Evidence quality
+
+注意：
+- 不要编造候选文件、网页或 PDF 中没有的信息。
+- 不要把旧报告当作今天的新结果。
+- 如果网络抓取失败，停止并报告原因，不要写泛化空日报。
