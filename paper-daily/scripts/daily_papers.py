@@ -43,7 +43,7 @@ class FetchStageError(RuntimeError):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fetch paper candidates for Codex review.")
     parser.add_argument("--config", default="config.yaml", help="Path to config.yaml")
-    parser.add_argument("--date", default="today", help="'today' or YYYY-MM-DD")
+    parser.add_argument("--date", default="today", help="'today', 'N-days-ago', or YYYY-MM-DD")
     parser.add_argument(
         "--stage",
         default="fetch",

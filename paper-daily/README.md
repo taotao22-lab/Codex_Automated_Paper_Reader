@@ -23,6 +23,7 @@ python -m venv .venv-win
 
 ```bash
 python scripts/daily_papers.py --config config.yaml --date today --stage fetch --force
+python scripts/daily_papers.py --config config.yaml --date 3-days-ago --stage fetch --force
 ```
 
 Common options:
@@ -30,6 +31,7 @@ Common options:
 ```bash
 python scripts/daily_papers.py --config config.yaml --date 2026-05-15 --stage fetch --force
 python scripts/daily_papers.py --config config.yaml --date today --stage fetch --lookback-days 3
+python scripts/daily_papers.py --config config.yaml --date 3-days-ago --stage fetch --force
 python scripts/daily_papers.py --config config.yaml --date today --stage fetch --sources arxiv,openreview
 python scripts/daily_papers.py --config config.yaml --date today --stage fetch --sources openalex
 ```

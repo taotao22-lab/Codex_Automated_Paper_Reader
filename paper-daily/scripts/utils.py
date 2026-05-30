@@ -9,7 +9,7 @@ import re
 import tempfile
 import time as time_module
 import unicodedata
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
 from urllib.request import Request, ProxyHandler, build_opener
@@ -99,14 +99,20 @@ def ensure_dirs(paths: dict[str, Path] | Iterable[Path]) -> None:
 
 
 def parse_target_date(value: str | None) -> date:
-    """Parse 'today' or an ISO date into a date object."""
+    """Parse 'today', 'N-days-ago', or an ISO date into a date object."""
 
-    if value is None or value.lower() == "today":
+    if value is None:
         return date.today()
+    normalized = value.strip().lower()
+    if normalized == "today":
+        return date.today()
+    match = re.fullmatch(r"(\d+)[-_]?days?[-_]?ago", normalized)
+    if match:
+        return date.today() - timedelta(days=int(match.group(1)))
     try:
         return datetime.strptime(value, "%Y-%m-%d").date()
     except ValueError as exc:
-        raise ValueError("--date must be 'today' or YYYY-MM-DD") from exc
+        raise ValueError("--date must be 'today', 'N-days-ago', or YYYY-MM-DD") from exc
 
 
 def setup_logger(log_path: Path) -> logging.Logger:

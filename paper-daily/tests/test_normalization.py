@@ -16,6 +16,8 @@ from fetch_arxiv import (
 )
 from fetch_openreview import normalize_openreview_note
 from fetch_openalex import abstract_from_inverted_index, normalize_openalex_work
+import utils
+from utils import parse_target_date
 
 
 class Obj:
@@ -303,3 +305,15 @@ def test_openalex_abstract_from_inverted_index_skips_bad_positions():
     abstract = abstract_from_inverted_index({"Adaptive": [0], "decoding": ["1"], "bad": ["x"]})
 
     assert abstract == "Adaptive decoding"
+
+
+def test_parse_target_date_supports_days_ago(monkeypatch):
+    class FixedDate(date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 5, 31)
+
+    monkeypatch.setattr(utils, "date", FixedDate)
+
+    assert parse_target_date("3-days-ago") == date(2026, 5, 28)
+    assert parse_target_date("1-day-ago") == date(2026, 5, 30)

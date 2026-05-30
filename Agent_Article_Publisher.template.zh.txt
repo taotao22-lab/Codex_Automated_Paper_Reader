@@ -19,8 +19,8 @@
   或
   <ABSOLUTE_PATH_TO_PYTHON>
 
-第一步：只运行候选检索，不要让脚本生成日报：
-python scripts/daily_papers.py --config config.yaml --date today --stage fetch --force
+第一步：只运行候选检索，不要让脚本生成日报。自动化固定检索 3 天前的候选，避免当天源站批次尚未更新：
+python scripts/daily_papers.py --config config.yaml --date 3-days-ago --stage fetch --force
 
 网络预检要求：
 - 脚本会先检测 `export.arxiv.org`、`arxiv.org`、`openreview.net`、`api2.openreview.net` 等核心网址。
@@ -136,7 +136,7 @@ docs/agent-article-reports/YYYY-MM-DD.md
 - 值得加入 related work 的论文/文章
 
 GitHub 提交要求：
-- 自动化应每天 7:00 运行并提交当天日报。
+- 自动化应每天 7:00 运行，并提交 3 天前日期对应的日报。
 - 只提交 `docs/agent-article-reports` 中本次新增或修改的日报/索引文件。
 - 不要提交 `paper-daily/data/`、`paper-daily/logs/`、虚拟环境或临时文件。
 - 如果有可提交变化，执行：
