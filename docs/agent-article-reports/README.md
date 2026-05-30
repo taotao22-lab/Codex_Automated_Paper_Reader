@@ -1,5 +1,5 @@
-# Agent Article Reports
+# Agent 文章日报
 
-Daily Markdown reports for General Agent, Search Agent, and Code Agent papers/articles are written here.
+这里存放每日生成的 General Agent、Search Agent 和 Code Agent 论文/技术文章中文日报。
 
-The fetch pipeline still keeps raw candidate data under `paper-daily/data/`, which is ignored by Git. This directory is intentionally tracked so generated daily reports can be committed and pushed to GitHub.
+原始候选数据仍保存在 `paper-daily/data/` 下，并默认被 Git 忽略。这个目录会被 Git 跟踪，因此生成后的日报可以提交并推送到 GitHub。
