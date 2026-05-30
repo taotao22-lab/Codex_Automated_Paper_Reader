@@ -1,79 +1,84 @@
 # Agent Article Publisher 自动化 Prompt 模板（中文）
 
 项目定位：
-- `paper-daily` 只负责候选检索，不直接生成最终日报。
-- Codex 必须作为研究助理阅读候选、语义评分、排序、总结，并写入最终日报。
+- `paper-daily` 只是候选检索脚本工具，不是日报生成器。
+- Codex 必须作为科研助理阅读候选、语义评分、排序、总结，并写入最终日报。
 
 运行方式：
 - 使用 Codex standalone automation。
 - 如果自动化配置可以指定 `cwd`，请设为你的本地 `paper-daily` 目录。
-- 不要切换到另一个同名项目或旧路径。
+- 不要切换到其他同名或旧路径项目。
 
-本地工作目录：
+本地路径：
 <ABSOLUTE_PATH_TO_THIS_REPO>/paper-daily
 
 路径要求：
 - 所有相对路径都必须以 `paper-daily` 目录为基准。
-- 使用你机器上的 Python 可执行文件，例如：
+- 使用你的 Python 可执行文件，例如：
   python
   或
   <ABSOLUTE_PATH_TO_PYTHON>
 
-第一步：只运行候选检索，不要让脚本直接写最终日报：
+第一步：只运行候选检索，不要让脚本生成日报：
 python scripts/daily_papers.py --config config.yaml --date today --stage fetch --force
 
 网络预检要求：
-- 脚本会先检查核心站点，例如 `export.arxiv.org`、`arxiv.org`、`openreview.net`、`api2.openreview.net`。
+- 脚本会先检测 `export.arxiv.org`、`arxiv.org`、`openreview.net`、`api2.openreview.net` 等核心网址。
 - 如果网络预检失败，立即停止自动化并报告网络错误。
-- 不要继续评分，不要写空日报，不要把旧候选池冒充为今天的结果。
+- 不要继续评分，不要写空日报，不要用旧候选池冒充当天结果。
 
 候选文件：
-- fetch 完成后，读取命令输出中的候选文件路径，通常是：
-  `data/processed/YYYY-MM-DD_candidates.json`
+- fetch 完成后读取命令输出中的候选文件路径，通常是：
+  data/processed/YYYY-MM-DD_candidates.json
 - 同时读取 `data/raw/YYYY-MM-DD.json` 中的 `recommended_action` 和 `duplicate_check`。
-- 如果 `recommended_action` 是 `write_no_new_batch_note`，`duplicate_check.recommended_action` 是 `write_no_new_batch_note`，`duplicate_check.status` 是 `duplicate_of_previous`，或者今天的候选为空 / 今天的候选 paper id 集合与最近一次完全一致：
+- 如果 `recommended_action` 是 `write_no_new_batch_note`、`duplicate_check.recommended_action` 是 `write_no_new_batch_note`、`duplicate_check.status` 是 `duplicate_of_previous`，或当天 candidates 为空 / paper id 集合与最近一天 candidates 完全一致：
   - 不要重复生成正常 Top 10 日报。
-  - 不要把旧 Top 10 当成今天的新结果。
-  - 只在 `docs/agent-article-reports/YYYY-MM-DD.md` 写一段很短的“今日无新候选批次”说明，注明候选数量、最近可见的 arXiv 批次、以及可能原因，例如今天的 recent-list 还未更新、目标日期没有公告批次、或候选池与上一批重复。
+  - 不要沿用旧 Top 10 冒充当天新推荐。
+  - 写一个很短的“今日无新候选批次”说明到 `docs/agent-article-reports/YYYY-MM-DD.md`，注明候选数量、最近可见 arXiv 批次、主要原因（例如 arXiv 今日 recent-list 尚未更新、当天无公告批次、或候选池与上一批重复）。
   - 除非用户明确要求补跑/重评，不要重写 `data/processed/YYYY-MM-DD_scored.json`。
 
 如果 fetch 失败或候选池为空：
 - 检查 `logs/YYYY-MM-DD.log`、`data/raw/YYYY-MM-DD.json` 和 `data/processed/YYYY-MM-DD_candidates.json`。
-- 如果原因是网络、代理、arXiv 或 OpenReview 访问失败，不要写泛化的空日报。
-- 报告失败命令、错误原因、已生成文件、候选数量以及建议修复方案。
-- 只有在用户明确要求 fallback 时，才可以使用最近一个非空候选文件生成补写日报，并在报告开头标明来源日期。
+- 如果原因是网络、代理、arXiv 或 OpenReview 访问失败，不要写泛化空日报。
+- 报告失败命令、错误原因、已生成文件、候选数量和建议修复方案。
+- 只有在用户明确要求 fallback 时，才可使用最近一个非空 candidates 文件生成补跑日报，并在报告开头标明来源日期。
 
 研究背景：
-<WRITE_YOUR_RESEARCH_BACKGROUND_HERE>
+我关注 General Agent、Search Agent 和 Code Agent 方向，重点是大模型 Agent 如何完成规划、工具调用、搜索检索、代码生成/编辑、软件工程任务自动化、评测、安全约束和可部署工作流。希望日报优先筛选能够启发 Agent 系统设计、搜索策略、代码执行闭环和工程落地的论文或技术文章。
 
 推荐原则：
-- 优先推荐能迁移到 Agent 研究问题上的通用方法、系统和评测论文/文章。
-- 不要只因为标题含有领域关键词就给高分。
-- 相邻领域的工作只要方法可迁移，也可以高分。
-- 对于直接相关领域的文章，也要看方法贡献、实验质量和可复用价值。
+- 优先推荐能迁移到 General Agent、Search Agent 和 Code Agent 研究问题中的通用 AI 方法、系统和评测论文/文章。
+- 不要只因为论文包含领域关键词就给高分。
+- 相邻领域论文只要方法可迁移，也可以高分。
+- 对直接领域论文也要看方法贡献、实验质量和可复用价值。
 
 重点关注：
-<WRITE_YOUR_FOCUS_TOPICS_HERE>
+- General Agent：自主 Agent、LLM Agent、Multi-Agent、规划、工具调用、记忆、反思、自改进、长程任务执行、GUI/Browser/Computer-use Agent。
+- Search Agent：Web Agent、Search Agent、检索增强生成、查询规划、网页浏览、信息寻源、事实核验、答案验证、RAG、reranking。
+- Code Agent：Coding Agent、Software Engineering Agent、代码生成、代码编辑、自动调试、测试生成、仓库级任务、issue resolution、SWE-bench 类评测。
+- Agent Evaluation and Safety：Agent benchmark、任务成功率评测、轨迹评估、沙箱、权限控制、human-in-the-loop、幻觉与风险控制。
 
 负向过滤：
-<WRITE_YOUR_NEGATIVE_TOPICS_HERE>
+- 与 Agent 架构、搜索/检索、代码任务或评测无关的纯应用论文。
+- 纯医学、材料、金融、推荐系统、教育 tutoring、交通预测、蛋白质或机器人控制论文，除非方法可以直接迁移到 Agent。
+- 只有关键词命中但没有 Agent 方法、系统、工具链、评测或工程启发的文章。
 
 评分维度，每项 0-5：
-- Agent relevance
-- Method or system insight
-- Search/retrieval/code-agent relevance
-- Practical reproducibility
-- Novelty/timeliness
-- Evidence quality
+- Methodological Relevance
+- Inspiration Value
+- Transferability to My Research
+- Paper Quality
+- Novelty / Timeliness
+- Actionability
 
 综合分：
 Final Score =
-0.25 * Agent relevance
-+ 0.25 * Method or system insight
-+ 0.20 * Search/retrieval/code-agent relevance
-+ 0.15 * Practical reproducibility
-+ 0.10 * Novelty/timeliness
-+ 0.05 * Evidence quality
+0.25 * Methodological Relevance
++ 0.25 * Inspiration Value
++ 0.20 * Transferability to My Research
++ 0.15 * Paper Quality
++ 0.10 * Novelty / Timeliness
++ 0.05 * Actionability
 
 评分输出：
 保存到：
@@ -90,14 +95,14 @@ data/processed/YYYY-MM-DD_scored.json
   "top10_ids": [],
   "papers": [
     {
-      "...original candidate fields": "...",
+      "...原始候选字段": "...",
       "semantic_scores": {
-        "agent_relevance": 0,
-        "method_or_system_insight": 0,
-        "search_retrieval_code_agent_relevance": 0,
-        "practical_reproducibility": 0,
+        "methodological_relevance": 0,
+        "inspiration_value": 0,
+        "transferability_to_my_research": 0,
+        "paper_quality": 0,
         "novelty_timeliness": 0,
-        "evidence_quality": 0,
+        "actionability": 0,
         "final_score": 0
       },
       "selected_for_deep_read": false,
@@ -109,15 +114,15 @@ data/processed/YYYY-MM-DD_scored.json
 }
 
 阅读流程：
-1. 读取 `candidates.json`，先基于 title、abstract、venue/categories、retrieval_reason 做逐篇语义评分。
-2. 从高分候选中选择约 15 篇做进一步阅读。
-3. 对最终 Top 10 尽量打开论文页或 PDF，阅读 abstract、introduction、method、experiments、conclusion。
+1. 读取 candidates.json，先基于 title、abstract、venue/categories、retrieval_reason 做逐篇语义评分。
+2. 从高分候选中选择约 15 篇进一步阅读。
+3. 对最终 Top 10 尽量打开论文页面或 PDF，阅读 abstract、introduction、method、experiments、conclusion。
 4. 如果只能基于 abstract 判断，必须在 `reading_evidence` 和日报中明确写明。
 5. 不要编造候选、网页或 PDF 中无法支持的信息。
 
 日报输出：
 写入：
-`docs/agent-article-reports/YYYY-MM-DD.md`
+docs/agent-article-reports/YYYY-MM-DD.md
 
 日报建议包含：
 - 今日概览
@@ -125,23 +130,33 @@ data/processed/YYYY-MM-DD_scored.json
 - Search Agent
 - Code Agent
 - Top 10 Papers or Articles
-- 每篇内容：核心方法、迁移价值、可落地实验/模块、局限、阅读建议、证据来源
-- 今日趋势
+- 每篇论文/文章的核心方法、迁移价值、可转化实验/模块、局限、阅读建议、证据来源
+- 今日重点趋势
 - 潜在研究 idea
-- 值得加入 related work 的文章
+- 值得加入 related work 的论文/文章
 
-最终回复：
+GitHub 提交要求：
+- 自动化应每天 7:00 运行并提交当天日报。
+- 只提交 `docs/agent-article-reports` 中本次新增或修改的日报/索引文件。
+- 不要提交 `paper-daily/data/`、`paper-daily/logs/`、虚拟环境或临时文件。
+- 如果有可提交变化，执行：
+  git add docs/agent-article-reports
+  git commit -m "docs: add daily agent article report YYYY-MM-DD"
+  git push origin main
+
+最后回复用户：
 - 今日候选数量
-- Top 标题
+- Top 10 标题
 - scored.json 路径
 - 日报路径
-- 任何失败源、网络问题或 abstract-only 限制
+- 任何失败源、网络/代理问题或 abstract-only 限制
 
 禁止：
-- 不要只运行脚本就结束。
-- 不要直接使用关键词模板生成最终日报。
-- 不要没有阅读候选内容就写总结。
-- 不要生成大量重复套话。
-- 不要因为论文命中领域关键词就给高分。
-- 不要编造 PDF 或网页中没有的信息。
-- 不要自动 git push。
+- 禁止只调用脚本就结束。
+- 禁止直接使用关键词模板生成最终报告。
+- 禁止没阅读候选内容就总结。
+- 禁止生成大量重复套话。
+- 禁止因为论文命中领域关键词就给高分。
+- 禁止编造 PDF 或正文中没有的信息。
+- 禁止提交候选数据、日志、虚拟环境或临时文件。
+
