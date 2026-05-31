@@ -10,17 +10,24 @@
 - 不要切换到其他同名或旧路径项目。
 
 本地路径：
-<ABSOLUTE_PATH_TO_THIS_REPO>/paper-daily
+C:\Users\24644\Desktop\Codex_Automated_Paper_Reader\paper-daily
 
 路径要求：
 - 所有相对路径都必须以 `paper-daily` 目录为基准。
-- 使用你的 Python 可执行文件，例如：
+- 使用当前环境中的 Python 可执行文件：
   python
-  或
-  <ABSOLUTE_PATH_TO_PYTHON>
+- 仓库根目录是：
+  C:\Users\24644\Desktop\Codex_Automated_Paper_Reader
+- 日报提交目录是：
+  C:\Users\24644\Desktop\Codex_Automated_Paper_Reader\docs\agent-article-reports
 
 第一步：只运行候选检索，不要让脚本生成日报。自动化固定检索 3 天前的候选，避免当天源站批次尚未更新：
 python scripts/daily_papers.py --config config.yaml --date 3-days-ago --stage fetch --force
+
+日期规则：
+- `--date 3-days-ago` 会解析为运行当天往前 3 天的目标日期。
+- 后续所有 `YYYY-MM-DD` 都必须使用这个目标日期，而不是自动化运行当天。
+- 例如在 2026-05-31 运行时，目标日期是 2026-05-28，应读取 `data/processed/2026-05-28_candidates.json`，写入 `docs/agent-article-reports/2026-05-28.md`，提交信息使用 `文档：新增 2026-05-28 Agent 文章日报`。
 
 网络预检要求：
 - 脚本会先检测 `export.arxiv.org`、`arxiv.org`、`openreview.net`、`api2.openreview.net` 等核心网址。
@@ -31,6 +38,7 @@ python scripts/daily_papers.py --config config.yaml --date 3-days-ago --stage fe
 - fetch 完成后读取命令输出中的候选文件路径，通常是：
   data/processed/YYYY-MM-DD_candidates.json
 - 同时读取 `data/raw/YYYY-MM-DD.json` 中的 `recommended_action` 和 `duplicate_check`。
+- 这里的 `YYYY-MM-DD` 是 `3-days-ago` 解析出的目标日期。
 - 如果 `recommended_action` 是 `write_no_new_batch_note`、`duplicate_check.recommended_action` 是 `write_no_new_batch_note`、`duplicate_check.status` 是 `duplicate_of_previous`，或当天 candidates 为空 / paper id 集合与最近一天 candidates 完全一致：
   - 不要重复生成正常 Top 10 日报。
   - 不要沿用旧 Top 10 冒充当天新推荐。
@@ -84,6 +92,8 @@ Final Score =
 保存到：
 data/processed/YYYY-MM-DD_scored.json
 
+注意：这里的 `YYYY-MM-DD` 必须是目标日期，即 3 天前日期。
+
 建议结构：
 {
   "date": "YYYY-MM-DD",
@@ -124,6 +134,8 @@ data/processed/YYYY-MM-DD_scored.json
 写入：
 docs/agent-article-reports/YYYY-MM-DD.md
 
+注意：日报日期必须是目标日期，即 3 天前日期。
+
 日报建议包含：
 - 今日概览
 - General Agent
@@ -145,6 +157,7 @@ GitHub 提交要求：
   git push origin main
 
 最后回复用户：
+- 目标日期
 - 今日候选数量
 - Top 10 标题
 - scored.json 路径
