@@ -131,8 +131,7 @@ docs/agent-article-reports/YYYY-MM-DD.md
 - General Agent
 - Search Agent
 - Code Agent
-- Top 10 Papers or Articles
-- 每篇论文/文章的核心方法、迁移价值、可转化实验/模块、局限、阅读建议、证据来源
+- 每篇论文/文章的核心方法（多讲一下）、创新点（多讲一下）、可转化实验/模块、局限、阅读建议、证据来源
 - 今日重点趋势
 - 潜在研究 idea
 - 值得加入 related work 的论文/文章
