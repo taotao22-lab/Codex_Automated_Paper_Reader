@@ -10,24 +10,17 @@
 - 不要切换到其他同名或旧路径项目。
 
 本地路径：
-C:\Users\24644\Desktop\Codex_Automated_Paper_Reader\paper-daily
+<ABSOLUTE_PATH_TO_THIS_REPO>/paper-daily
 
 路径要求：
 - 所有相对路径都必须以 `paper-daily` 目录为基准。
-- 使用当前环境中的 Python 可执行文件：
+- 使用你的 Python 可执行文件，例如：
   python
-- 仓库根目录是：
-  C:\Users\24644\Desktop\Codex_Automated_Paper_Reader
-- 日报提交目录是：
-  C:\Users\24644\Desktop\Codex_Automated_Paper_Reader\docs\agent-article-reports
+  或
+  <ABSOLUTE_PATH_TO_PYTHON>
 
 第一步：只运行候选检索，不要让脚本生成日报。自动化固定检索 3 天前的候选，避免当天源站批次尚未更新：
 python scripts/daily_papers.py --config config.yaml --date 3-days-ago --stage fetch --force
-
-日期规则：
-- `--date 3-days-ago` 会解析为运行当天往前 3 天的目标日期。
-- 后续所有 `YYYY-MM-DD` 都必须使用这个目标日期，而不是自动化运行当天。
-- 例如在 2026-05-31 运行时，目标日期是 2026-05-28，应读取 `data/processed/2026-05-28_candidates.json`，写入 `docs/agent-article-reports/2026-05-28.md`，提交信息使用 `文档：新增 2026-05-28 Agent 文章日报`。
 
 网络预检要求：
 - 脚本会先检测 `export.arxiv.org`、`arxiv.org`、`openreview.net`、`api2.openreview.net` 等核心网址。
@@ -38,7 +31,6 @@ python scripts/daily_papers.py --config config.yaml --date 3-days-ago --stage fe
 - fetch 完成后读取命令输出中的候选文件路径，通常是：
   data/processed/YYYY-MM-DD_candidates.json
 - 同时读取 `data/raw/YYYY-MM-DD.json` 中的 `recommended_action` 和 `duplicate_check`。
-- 这里的 `YYYY-MM-DD` 是 `3-days-ago` 解析出的目标日期。
 - 如果 `recommended_action` 是 `write_no_new_batch_note`、`duplicate_check.recommended_action` 是 `write_no_new_batch_note`、`duplicate_check.status` 是 `duplicate_of_previous`，或当天 candidates 为空 / paper id 集合与最近一天 candidates 完全一致：
   - 不要重复生成正常 Top 10 日报。
   - 不要沿用旧 Top 10 冒充当天新推荐。
@@ -52,19 +44,21 @@ python scripts/daily_papers.py --config config.yaml --date 3-days-ago --stage fe
 - 只有在用户明确要求 fallback 时，才可使用最近一个非空 candidates 文件生成补跑日报，并在报告开头标明来源日期。
 
 研究背景：
-我关注 General Agent、Search Agent 和 Code Agent 方向。参考 DeepSeek-V3.2 技术报告，我更关心“高效长上下文 + 可扩展强化学习 + 大规模 agentic task synthesis”如何把强推理能力稳定迁移到真实工具使用场景：模型不仅要会解题，还要能在复杂交互环境中规划、调用工具、检索信息、读写代码、验证结果并持续修正。希望日报优先筛选能启发 Agent 训练数据构造、post-training/RL、tool-use reasoning、长上下文系统设计、代码执行闭环和工程化部署的论文或技术文章。
+我关注大模型后训练，包括 General Agent、Search Agent 和 Code Agent 方向。参考 DeepSeek-V3.2 技术报告，我更关心如何把强推理能力稳定迁移到真实工具使用场景：模型不仅要会解题，还要能在复杂交互环境中规划、调用工具、检索信息、读写代码、验证结果并持续修正。希望日报优先筛选能启发 Agent 训练数据构造、post-training/RL、tool-use reasoning、长上下文系统设计、代码执行闭环的论文或技术报告。
 
 推荐原则：
-- 优先推荐能迁移到 General Agent、Search Agent 和 Code Agent 研究问题中的通用 AI 方法、系统、训练流程和评测论文/文章。
+- 优先推荐 General Agent、Search Agent 和 Code Agent 研究问题中的通用 AI 方法、系统、训练流程和评测论文。
+- General Agent的论文类似EnvScaler、EnvFactory、AgentWorld、AgentWorldModel、AgentSkiller、DIVE、ScaleEnv、AgentScaler、AutoForge等
+- Search Agent的论文类似RedSearcher、WebWeaver等
 - 不要只因为论文包含领域关键词就给高分。
 - 相邻领域论文只要方法可迁移，也可以高分。
 - 对直接领域论文也要看方法贡献、实验质量、可复现性、数据构造方式和可复用工程价值。
 
 重点关注：
-- General Agent：reasoning-in-tool-use、长程规划、任务分解、工具调用协议、记忆与上下文压缩、反思/自修正、多轮交互鲁棒性、Computer-use/GUI/Browser Agent、可扩展 agentic post-training。
+- General Agent：环境合成、任务合成、自演化、reasoning-in-tool-use、长程规划、任务分解、记忆与上下文压缩、Computer-use/GUI/Browser Agent、可扩展 agentic post-training、沙箱。
 - Search Agent：搜索任务合成、查询规划、网页浏览、RAG、reranking、信息寻源、事实核验、答案验证、引用可信度、长上下文检索整合，以及搜索轨迹如何作为强化学习或监督微调数据。
 - Code Agent：代码生成与编辑、仓库级理解、issue resolution、测试生成、自动调试、执行反馈、错误定位、代码审查、SWE-bench 类评测，以及“思考-工具调用-运行测试-修复”的闭环训练。
-- Agent Training and Evaluation：大规模 agentic task synthesis、复杂环境构造、RL/post-training compute scaling、trajectory-level evaluation、instruction-following robustness、tool-use benchmark、沙箱和权限控制。
+
 
 负向过滤：
 - 与 Agent 架构、搜索/检索、代码任务或评测无关的纯应用论文。
@@ -91,8 +85,6 @@ Final Score =
 评分输出：
 保存到：
 data/processed/YYYY-MM-DD_scored.json
-
-注意：这里的 `YYYY-MM-DD` 必须是目标日期，即 3 天前日期。
 
 建议结构：
 {
@@ -125,16 +117,14 @@ data/processed/YYYY-MM-DD_scored.json
 
 阅读流程：
 1. 读取 candidates.json，先基于 title、abstract、venue/categories、retrieval_reason 做逐篇语义评分。
-2. 从高分候选中选择约 15 篇进一步阅读。
-3. 对最终 Top 10 尽量打开论文页面或 PDF，阅读 abstract、introduction、method、experiments、conclusion。
+2. 从高分候选中选择约 10 篇进一步阅读。
+3. 对最终 10 篇论文 一定要打开论文页面或 PDF，阅读 abstract、introduction、method、experiments、conclusion。
 4. 如果只能基于 abstract 判断，必须在 `reading_evidence` 和日报中明确写明。
 5. 不要编造候选、网页或 PDF 中无法支持的信息。
 
 日报输出：
 写入：
 docs/agent-article-reports/YYYY-MM-DD.md
-
-注意：日报日期必须是目标日期，即 3 天前日期。
 
 日报建议包含：
 - 今日概览
@@ -157,7 +147,6 @@ GitHub 提交要求：
   git push origin main
 
 最后回复用户：
-- 目标日期
 - 今日候选数量
 - Top 10 标题
 - scored.json 路径
