@@ -44,7 +44,7 @@ python scripts/daily_papers.py --config config.yaml --date 3-days-ago --stage fe
 - 只有在用户明确要求 fallback 时，才可使用最近一个非空 candidates 文件生成补跑日报，并在报告开头标明来源日期。
 
 研究背景：
-我关注大模型后训练，包括 General Agent、Search Agent 和 Code Agent 方向。参考 DeepSeek-V3.2 技术报告，我更关心如何把强推理能力稳定迁移到真实工具使用场景：模型不仅要会解题，还要能在复杂交互环境中规划、调用工具、检索信息、读写代码、验证结果并持续修正。希望日报优先筛选能启发 Agent 训练数据构造、post-training/RL、tool-use reasoning、长上下文系统设计、代码执行闭环的论文或技术报告。
+我关注大模型后训练，包括 General Agent、Search Agent 和 Code Agent 方向。参考 DeepSeek-V3.2 技术报告，我更关心如何把推理能力稳定迁移到真实工具使用场景：模型不仅要会解题，还要能在复杂交互环境中规划、调用工具、检索信息、读写代码、验证结果并持续修正。希望日报优先筛选能启发 Agent 训练数据构造、post-training/RL、tool-use reasoning、长上下文系统设计、代码执行闭环的论文或技术报告。
 
 推荐原则：
 - 优先推荐 General Agent、Search Agent 和 Code Agent 研究问题中的通用 AI 方法、系统、训练流程和评测论文。
@@ -122,6 +122,15 @@ data/processed/YYYY-MM-DD_scored.json
 4. 如果只能基于 abstract 判断，必须在 `reading_evidence` 和日报中明确写明。
 5. 不要编造候选、网页或 PDF 中无法支持的信息。
 
+精读论文写作要求：
+- 对每篇进入 Top 10 的论文，核心方法不要只写 2-3 行。至少用一段较完整的中文解释清楚：论文要解决什么问题、为什么已有方法不够、它提出了哪些模块/训练流程/系统组件、这些组件如何协同工作。
+- 核心方法要尽量通俗易懂。不要只复述论文术语，要把关键机制翻译成直观说法，例如“它把工具调用从 prompt 文本搬到可持久化 runtime 中”“它用可验证环境把执行结果变成奖励信号”“它把搜索结果从相似文本改成可触发动作的规则”。
+- 创新点要单独讲清楚，说明它相对已有 Agent/Search/Code Agent 工作的新意在哪里，是新环境、新数据合成方式、新训练目标、新评测协议、新工具接口，还是新的执行闭环。
+- 必须写清楚实验和 benchmark。每篇 Top 10 都要尽量列出论文使用的 benchmark、数据集、评测环境、任务集合或指标；如果只从摘要/网页无法确认，也要明确写“摘要未说明具体 benchmark/指标”。
+- benchmark 说明不要只罗列名字，还要简单解释它测的是什么能力，例如长程工具调用、网页检索、仓库级修复、GUI 操作、代码执行、事实核验、轨迹评估等。
+- 如果论文报告了关键数值结果，要摘出最重要的 1-3 个；如果无法核实数值，不要编造。
+- 每篇论文建议包含以下小项：问题背景、核心方法、创新点、实验与 benchmark、可迁移价值、局限、阅读建议、证据来源。
+
 日报输出：
 写入：
 docs/agent-article-reports/YYYY-MM-DD.md
@@ -131,7 +140,7 @@ docs/agent-article-reports/YYYY-MM-DD.md
 - General Agent
 - Search Agent
 - Code Agent
-- 每篇论文/文章的核心方法（多讲一下）、创新点（多讲一下）、可转化实验/模块、局限、阅读建议、证据来源
+- 每篇论文/文章的问题背景、核心方法（详细、通俗）、创新点（详细）、实验与 benchmark、可转化实验/模块、局限、阅读建议、证据来源
 - 今日重点趋势
 - 潜在研究 idea
 - 值得加入 related work 的论文/文章
