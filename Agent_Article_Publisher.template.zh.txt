@@ -135,6 +135,12 @@ data/processed/YYYY-MM-DD_scored.json
 写入：
 docs/agent-article-reports/YYYY-MM-DD.md
 
+中文与编码要求：
+- 最终日报和模板文件必须保持 UTF-8 编码，提交前必须用 UTF-8 读取检查文件内容，确认中文不是 `??`、`????` 或 mojibake。
+- 在 Windows/PowerShell 环境中，禁止把包含中文正文的大段 here-string 通过管道传给 `python -`、`Set-Content` 或其他命令后再写文件；这可能受活动代码页影响，把中文替换成问号。
+- 如果需要程序化生成中文日报，必须使用已保存为 UTF-8 的脚本/模板文件作为输入，或使用 `apply_patch`/UTF-8 文件 API 直接写入目标文件；不要把中文正文嵌在 PowerShell 命令字符串里。
+- `Get-Content` 检查中文文件时应显式使用 UTF-8，例如 `Get-Content -Encoding UTF8 docs/agent-article-reports/YYYY-MM-DD.md`。如果终端显示异常，还要用 Python `Path(...).read_text(encoding="utf-8")` 抽样检查真实文件内容。
+
 日报建议包含：
 - 今日概览
 - General Agent
